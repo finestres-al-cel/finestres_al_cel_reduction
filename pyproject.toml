@@ -1,0 +1,10 @@
+[tool]
+name = "finestres_al_cel_reduction"
+version = "0.1.0"
+description = "Planet orbits app"
+authors = ["Ignasi Perez-Rafols <iprafols@gmail.com>"]
+license = "GNU GENERAL PUBLIC LICENSE"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
