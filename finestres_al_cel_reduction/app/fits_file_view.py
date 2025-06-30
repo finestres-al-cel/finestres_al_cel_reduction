@@ -60,7 +60,14 @@ class FitsFileView(QWidget):
         x, y = int(mousePoint.x()), int(mousePoint.y())
         data = self.fits_file.data
         if (0 <= x < data.shape[1]) and (0 <= y < data.shape[0]):
-            value = data[y, x]
+            
+            # If the data is a color image, compute luminance
+            if data.ndim == 3 and data.shape[-1] == 3:
+                # Standard luminance formula for RGB
+                aux = data[y, x]
+                value = 0.299 * aux[0] + 0.587 * aux[1] + 0.114 * aux[2]
+            else:
+                value = data[y, x]
             self.pixelValueLabel.setText(f"Pixel value at ({x}, {y}): {value:.2f}")
         else:
             self.pixelValueLabel.setText("Pixel value: ")
@@ -123,8 +130,16 @@ class FitsFileView(QWidget):
         colorMap = pg.colormap.get("CET-L2")  # choose perceptually uniform, diverging color map
 
         # generate an adjustabled color bar
-        vmin = np.nanpercentile(self.fits_file.data, 5)
-        vmax = np.nanpercentile(self.fits_file.data, 95)
+        # if color image, compute luminance for colorbar scaling
+        if data.ndim == 3 and data.shape[-1] == 3:
+            # Standard luminance formula for RGB
+            luminance = 0.299 * data[..., 0] + 0.587 * data[..., 1] + 0.114 * data[..., 2]
+            vmin = np.nanpercentile(luminance, 5)
+            vmax = np.nanpercentile(luminance, 95)
+        else:
+            # For grayscale images, use the data directly
+            vmin = np.nanpercentile(self.fits_file.data, 3)
+            vmax = np.nanpercentile(self.fits_file.data, 97)
         if vmin == vmax:
             vmax = vmin + 1  # avoid zero range
 

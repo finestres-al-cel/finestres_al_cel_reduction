@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QToolBar,
 )
 
+from finestres_al_cel_reduction.app.color_stack_dialog import ColorStackDialog
 from finestres_al_cel_reduction.app.environment import (
     HEIGHT, ICON_SIZE, MENU_FONT_SIZE, SUB_WINDOW_SIZE, 
     TITLE_FONT_SIZE, WIDTH, 
@@ -85,7 +86,6 @@ class MainWindow(QMainWindow):
         self.files = []
         self.master_darks = {}
         self.master_flats = {}
-        self.stack = {}
 
     def _createToolBar(self):
         """Create tool bars"""
@@ -176,8 +176,25 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def colorStack(self):
-        """Stack files"""
-        pass
+        """Perform color stacking"""
+        color_stack_window = ColorStackDialog(self.files)
+        if color_stack_window.exec() == QDialog.DialogCode.Accepted:
+            file = color_stack_window.color_stack
+            self.files.append(file)
+
+            fileView = FitsFileView(file)
+
+            # display in subwindow
+            subWindow = QMdiSubWindow()
+            subWindow.setWidget(fileView)
+            subWindow.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            subWindow.setWindowTitle(file.title)
+
+            subWindow.setFixedSize(SUB_WINDOW_SIZE, SUB_WINDOW_SIZE)
+
+            self.mdiArea.addSubWindow(subWindow)
+            subWindow.show()
+
 
     @pyqtSlot()
     def openFile(self):
@@ -244,12 +261,12 @@ class MainWindow(QMainWindow):
         """Stack images to improve SNR"""
         stack_window = StackDialog(self.files)
         if stack_window.exec() == QDialog.DialogCode.Accepted:
-            self.stack = stack_window.stack
 
-            for file in self.stack.values():
-                fileView = FitsFileView(file)
+            for file in stack_window.stack.values():
+                self.files.append(file)
 
                 # display in subwindow
+                fileView = FitsFileView(file)
                 subWindow = QMdiSubWindow()
                 subWindow.setWidget(fileView)
                 subWindow.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -259,3 +276,4 @@ class MainWindow(QMainWindow):
 
                 self.mdiArea.addSubWindow(subWindow)
                 subWindow.show()
+
